@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  username  String     @unique
+  password  String
+  role      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Admin     Admin?
+  Mahasiswa Mahasiswa?
+}
+
+model Mahasiswa {
+  id                       String           @id @default(uuid())
+  nim                      String           @unique
+  nama                     String
+  email                    String           @unique
+  jurusanId                String
+  semesterId               String
+  statusId                 String
+  userId                   String           @unique
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  statusPembayaranSemester Boolean          @default(true)
+  Jurusan                  Jurusan          @relation(fields: [jurusanId], references: [id])
+  Semester                 Semester         @relation(fields: [semesterId], references: [id])
+  StatusMhs                StatusMhs        @relation(fields: [statusId], references: [id])
+  user                     User             @relation(fields: [userId], references: [id])
+  MataKuliah_mhs           MataKuliah_mhs[]
+  Transkrip                Transkrip[]
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  username  String
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Jurusan {
+  id                 String               @id
+  nama_jurusan       String               @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  Mahasiswa          Mahasiswa[]
+  SemesterJurusan_mk SemesterJurusan_mk[]
+  Template_krs       Template_krs[]
+}
+
+model MataKuliah {
+  id                 String               @id
+  kode_mk            String               @unique
+  nama_mk            String
+  sks                Int
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  MataKuliah_mhs     MataKuliah_mhs[]
+  SemesterJurusan_mk SemesterJurusan_mk[]
+  Template_krs       Template_krs[]
+  Transkrip          Transkrip[]
+}
+
+model MataKuliah_mhs {
+  id           String     @id
+  mahasiswaId  String
+  mataKuliahId String
+  status       String     @default("off")
+  tahunAjar    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Mahasiswa    Mahasiswa  @relation(fields: [mahasiswaId], references: [id])
+  MataKuliah   MataKuliah @relation(fields: [mataKuliahId], references: [id])
+}
+
+model Nilai {
+  id        String      @id
+  nilai     String      @unique
+  bobot     Float
+  createdAt DateTime    @default(now())
+  updatedAt DateTime
+  Transkrip Transkrip[]
+}
+
+model Semester {
+  id                 String               @id
+  semester           String               @unique
+  batasKrs           Int
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  Mahasiswa          Mahasiswa[]
+  SemesterJurusan_mk SemesterJurusan_mk[]
+}
+
+model SemesterJurusan_mk {
+  id           String     @id
+  jurusanId    String
+  semesterId   String
+  mataKuliahId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Jurusan      Jurusan    @relation(fields: [jurusanId], references: [id])
+  MataKuliah   MataKuliah @relation(fields: [mataKuliahId], references: [id])
+  Semester     Semester   @relation(fields: [semesterId], references: [id])
+}
+
+model StatusKrs {
+  id        String   @id
+  status    String   @unique
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model StatusMhs {
+  id        String      @id
+  status    String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime
+  Mahasiswa Mahasiswa[]
+}
+
+model Template_krs {
+  id           String     @id
+  mataKuliahId String
+  status       String     @default("active")
+  tahunAjar    String
+  jurusanId    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Jurusan      Jurusan    @relation(fields: [jurusanId], references: [id])
+  MataKuliah   MataKuliah @relation(fields: [mataKuliahId], references: [id])
+}
+
+model Transkrip {
+  id           String     @id
+  mahasiswaId  String
+  mataKuliahId String
+  nilaiId      String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  Mahasiswa    Mahasiswa  @relation(fields: [mahasiswaId], references: [id])
+  MataKuliah   MataKuliah @relation(fields: [mataKuliahId], references: [id])
+  Nilai        Nilai      @relation(fields: [nilaiId], references: [id])
+
+  @@unique([mahasiswaId, mataKuliahId])
+}
